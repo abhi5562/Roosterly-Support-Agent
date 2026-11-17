@@ -63,7 +63,7 @@ def classify_ticket(subject: str, body: str) -> Classification:
 
     result = classifier.invoke([
         ("system", CLASSIFICATION_PROMPT),
-        ("human", json.dumps({"subject": subject, "body": body}, ensure_ascii=False)),
+        ("human", json.dumps({"subject": subject, "body": body})),
     ])
 
     if result.escalation_intents or result.language is None:

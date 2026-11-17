@@ -34,6 +34,21 @@ class Classification(BaseModel):
     escalation_intents: list[EscalationIntent]
 
 
+class FAQMatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    matched_faq_ids: list[NonEmptyText]
+    fully_supported: bool
+    confidence: Annotated[float, Field(ge=0, le=1)]
+
+
+class ReplyVerification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approved: bool
+    reason: NonEmptyText
+
+
 class DecisionMetadata(BaseModel):
     """Fields required by every action, plus optional confidence."""
 
