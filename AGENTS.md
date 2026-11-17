@@ -7,7 +7,7 @@
   - **Scope, safety rules, evaluation, or delivery:** [`docs/requirements.md`](docs/requirements.md)
   - **Workflow, models, configuration, and design:** [`docs/architecture.md`](docs/architecture.md)
   - **Helpdesk requests, responses, and errors:** [`docs/api_reference.md`](docs/api_reference.md)
-  - **Customer answers :** [`faq.md`](faq.md)
+  - **Customer answers :** [`docs/faq.md`](faq.md)
 - If the documents conflict, a required value is missing, or a change would alter an approved decision, ask me first. Do not silently decide for me.
 
 ## Approved design

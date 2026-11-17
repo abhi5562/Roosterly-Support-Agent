@@ -37,20 +37,20 @@ LangGraph will pass ticket details and results between steps. The shared state w
 - The API's open-ticket list tells us what still needs work. After a restart, fetch it again instead of relying on the local logs.
 - Never send decisions for tickets from `GET /examples`.
 
-### 2. Early safety checks — Python only
+### 2. Classify the ticket — Python empty check, then GPT-5 mini
 
-- If **both subject and body are empty**, close the ticket without calling the LLM. Use `language: "nl"` only because the API requires a language value. Include the other required fields and explain that the ticket was empty.
-- Check for clear cases that must go to a human: refunds or disputed charges, cancellations or contract changes, GDPR/AVG requests, security incidents, legal threats, and customers threatening to leave.
-- For these cases, lock the action to `handoff`, but still run classification so the API gets the required category, priority, and reason.
-- For the first version, keep these checks rule-based as planned. We can improve detection of less obvious wording after the initial implementation.
-
-### 3. Classify the ticket — GPT-5 mini
-
-- Read the original subject and body without translating them first.
-- Return the language (`nl`, `en`, `de`), category, priority (`P1`–`P4`), spam flag, proposed action, and reason.
+- At the start of classification, use Python to check whether **both subject and body are empty after stripping whitespace**. Close such tickets without calling the LLM. Use `language: "nl"` only because the API requires a language value. Include the other required fields and explain that the ticket was empty.
+- For nonempty tickets, GPT-5 mini reads the original subject and body without translating them first.
+- Return the language (`nl`, `en`, `de`), category, priority (`P1`–`P4`), spam flag, proposed action, escalation intents, and reason. Include every applicable escalation intent when a ticket has multiple requests.
 - Use Pydantic to check the result. Follow the priority definitions from the assignment.
 - The model can suggest an action, but it cannot override a required handoff or the later safety checks.
 - If classification fails or is unclear, hand off when a valid API request can be made.
+
+### 3. Enforce mandatory handoffs — Python only
+
+- GPT-5 mini identifies escalation intents during classification: refunds or disputed charges, cancellations or contract changes, personal-data requests (GDPR/AVG), possible security incidents, legal threats, and customers threatening to leave.
+- If any mandatory escalation intent is present, Python locks the action to `handoff`, regardless of the model's proposed action or spam flag.
+- Use the classification's language, category, priority, and reason for the required API metadata.
 
 ### 4. Match the FAQ
 
