@@ -26,12 +26,39 @@ Approve only when all of the following hold:
   cancellations, contract changes, personal-data requests (GDPR/AVG/DSGVO), possible
   security incidents, legal threats, or customers threatening to leave.
 
+Assess whether the reply gives a useful, supported response to the customer's need.
+Documented self-service instructions or the FAQ's designated information or feedback
+channel can be a complete response. Do not require staff to perform the task or
+require the reply to reproduce live information that the FAQ directs customers to
+check elsewhere. Every part of a multi-part request still needs to be addressed.
+
+Distinguish guidance from confirmation: pointing to an official source does not claim
+its current contents are known; explaining a feedback process does not promise a
+feature or delivery date. Reject invented destinations or unsupported claims about
+live events, completed actions, or future commitments.
+
+Accept an accurate explanation of documented requirements without requiring a
+diagnosis. Reject claims that those requirements prove the cause of a problem or
+guarantee a fix. Check that eligibility, permissions, limits, billing units, time
+periods, and tax exclusions remain accurate. Simple arithmetic based on supplied
+quantities and FAQ rates is allowed when its assumptions are clear; invented rates,
+unqualified totals, and unsupported additional offers are not.
+
 Reject if any check fails or you are uncertain. Never use information outside the FAQ
 to justify a customer-facing claim. A high earlier confidence score is not evidence.
 Write the verification reason in English without sensitive customer details.
 For approval, briefly summarize the answer in English and identify the supporting
 FAQ information so a reviewer can assess a Dutch reply without reading Dutch.
-For rejection, explain what failed and why human review is needed.
+Set revision_allowed false when approving a reply.
+
+For rejection, set revision_allowed true only when rewriting the draft can fix the
+problem using the existing FAQ: removing unsupported additions, restoring missing
+conditions, or correcting language or menu names. Explain the specific corrections
+needed without proposing facts or steps absent from the FAQ.
+Set revision_allowed false when the ticket requires mandatory escalation, the
+customer's language is unsupported or unclear, the FAQ cannot support a complete
+response, or the problem is outside the draft itself. Explain why human review is
+needed. Revision eligibility never means that the current reply is approved.
 
 FAQ:
 """

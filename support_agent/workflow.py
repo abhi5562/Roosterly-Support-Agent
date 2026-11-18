@@ -22,26 +22,55 @@ class WorkflowState(TypedDict):
     ticket: dict
     faq_text: str
     classification: Classification
+    initial_route: Action
     faq_match: FAQMatch | None
     action: Action
     request: ReplyRequest | HandoffRequest | CloseRequest | None
     verification: ReplyVerification | None
+    revision_attempted: bool
     handoff_reason: str
 
 
 def classify_node(state: WorkflowState):
     ticket = state["ticket"]
+    if not ticket["subject"].strip() and not ticket["body"].strip():
+        classification = Classification(
+            language="nl",
+            category="other",
+            priority="P4",
+            reason="Empty subject and body; no actionable content or urgency, so close; nl is a technical language fallback.",
+            is_spam=False,
+            escalation_intents=[],
+        )
+        initial_route = "close"
+    else:
+        classification = classify_ticket(ticket["subject"], ticket["body"])
+        if classification.escalation_intents or classification.language is None:
+            initial_route = "handoff"
+            if classification.escalation_intents:
+                classification.reason += " This request requires human support."
+            else:
+                classification.reason += " Human support is needed because the ticket's language is unsupported or unclear."
+        elif classification.is_spam:
+            initial_route = "close"
+            classification.reason += " Close this ticket because it is clear spam."
+        else:
+            initial_route = "reply"
+            classification.reason += " Check FAQ support before deciding whether to reply."
+
     return {
-        "classification": classify_ticket(ticket["subject"], ticket["body"]),
+        "classification": classification,
+        "initial_route": initial_route,
         "faq_match": None,
         "request": None,
         "verification": None,
+        "revision_attempted": False,
         "handoff_reason": "",
     }
 
 
 def route_classification(state: WorkflowState):
-    if state["classification"].proposed_action == "reply":
+    if state["initial_route"] == "reply":
         return "match_faq"
     return "decide"
 
@@ -53,7 +82,7 @@ def match_faq_node(state: WorkflowState):
 
 def decide_node(state: WorkflowState):
     classification = state["classification"]
-    action = decide_action(classification, state["faq_match"])
+    action = decide_action(classification, state["initial_route"], state["faq_match"])
     return {"action": action, "classification": classification}
 
 
@@ -86,7 +115,24 @@ def verify_reply_node(state: WorkflowState):
 def route_reply_verification(state: WorkflowState):
     if state["verification"].approved:
         return END
+    if state["verification"].revision_allowed and not state["revision_attempted"]:
+        return "revise_reply"
     return "handoff"
+
+
+def revise_reply_node(state: WorkflowState):
+    ticket = state["ticket"]
+    request = prepare_request(
+        subject=ticket["subject"],
+        body=ticket["body"],
+        classification=state["classification"],
+        action=state["action"],
+        faq_text=state["faq_text"],
+        faq_match=state["faq_match"],
+        previous_reply=state["request"].draft_reply,
+        verification_feedback=state["verification"].reason,
+    )
+    return {"request": request, "revision_attempted": True}
 
 
 def handoff_node(state: WorkflowState):
@@ -107,6 +153,7 @@ def build_workflow():
     graph.add_node("decide", decide_node)
     graph.add_node("prepare_request", prepare_request_node)
     graph.add_node("verify_reply", verify_reply_node)
+    graph.add_node("revise_reply", revise_reply_node)
     graph.add_node("handoff", handoff_node)
 
     graph.add_edge(START, "classify")
@@ -115,5 +162,6 @@ def build_workflow():
     graph.add_edge("decide", "prepare_request")
     graph.add_conditional_edges("prepare_request", route_prepared_request)
     graph.add_conditional_edges("verify_reply", route_reply_verification)
+    graph.add_edge("revise_reply", "verify_reply")
     graph.add_edge("handoff", "prepare_request")
     return graph.compile()

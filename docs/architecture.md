@@ -29,7 +29,7 @@ This document explains how I plan to build the agent. The requirements are in [`
 
 ## Components and workflow
 
-LangGraph will pass ticket details and results between steps. The shared state will hold the ticket, any handoff flag, classification, matched FAQ entries, proposed and final action, generated text, verification result, API result, and safe error details. Each step will use this state to decide what happens next.
+LangGraph will pass ticket details and results between steps. The shared state will hold the ticket, classification, Python-selected initial route, matched FAQ entries, final action, generated text, verification result, API result, and safe error details. Each step will use this state to decide what happens next.
 
 ### 1. Fetch tickets
 
@@ -39,17 +39,19 @@ LangGraph will pass ticket details and results between steps. The shared state w
 
 ### 2. Classify the ticket — Python empty check, then GPT-5 mini
 
-- At the start of classification, use Python to check whether **both subject and body are empty after stripping whitespace**. Close such tickets without calling the LLM. Use `language: "nl"` only because the API requires a language value. Include the other required fields and explain that the ticket was empty.
+- At the start of the workflow's classification node, use Python to check whether **both subject and body are empty after stripping whitespace**. Close such tickets without calling the LLM. Use `language: "nl"` only because the API requires a language value. Include the other required fields and explain that the ticket was empty.
 - For nonempty tickets, GPT-5 mini reads the original subject and body without translating them first.
-- Return the language (`nl`, `en`, `de`), category, priority (`P1`–`P4`), spam flag, proposed action, escalation intents, and reason. Include every applicable escalation intent when a ticket has multiple requests.
+- Return the language (`nl`, `en`, `de`), category, priority (`P1`–`P4`), spam flag, escalation intents, and reason. Include every applicable escalation intent when a ticket has multiple requests. The model does not return an action.
 - Use Pydantic to check the result. Follow the priority definitions from the assignment.
-- The model can suggest an action, but it cannot override a required handoff or the later safety checks.
+- The classification node determines the initial route once and stores it as `initial_route` in workflow state, separate from classification. The route comes from empty-ticket status, escalation intents, language, and spam status.
 - If classification fails or is unclear, hand off when a valid API request can be made.
 
-### 3. Enforce mandatory handoffs — Python only
+### 3. Select the initial route — Python only
 
 - GPT-5 mini identifies escalation intents during classification: refunds or disputed charges, cancellations or contract changes, personal-data requests (GDPR/AVG), possible security incidents, legal threats, and customers threatening to leave.
-- If any mandatory escalation intent is present, Python locks the action to `handoff`, regardless of the model's proposed action or spam flag.
+- If any mandatory escalation intent is present, Python locks the initial route to `handoff`, regardless of the spam flag.
+- Unknown language also locks the action to `handoff`. Otherwise, clear spam is closed.
+- Every other nonempty ticket becomes a reply candidate and proceeds to FAQ matching. This is not permission to send a reply: insufficient FAQ support, low confidence, or failed verification still requires handoff.
 - Use the classification's language, category, priority, and reason for the required API metadata.
 
 ### 4. Match the FAQ
@@ -63,10 +65,12 @@ LangGraph will pass ticket details and results between steps. The shared state w
 
 ### 5. Decide the action — Python checks
 
+Pass `initial_route` explicitly to the decision function; do not recalculate the classification node's routing checks.
+
 Apply these rules in order:
 
 1. If an earlier check locked the ticket to `handoff`, keep that action.
-2. Allow `close` only for completely empty tickets or clear spam. Otherwise, change a suggested close to `handoff`.
+2. Keep `close` only when selected by the empty-ticket or clear-spam checks.
 3. Allow `reply` only when the FAQ fully supports it **and** confidence meets the configured threshold.
 4. Hand off anything unclear, unsupported, or unsafe.
 
@@ -82,9 +86,12 @@ The confidence threshold is still to be chosen. It will be a project setting, no
 ### 7. Check replies before sending
 
 - Python checks the API fields, allowed language, Dutch menu names, payment details, and whether the reply has FAQ support.
-- For reply candidates only, make a **separate GPT-5.6 call** with its own prompt and structured result. Give it the original ticket, matched FAQ text, and draft reply. It checks whether the answer is correct, in the right language, and free of unsupported claims.
+- For reply candidates only, make a **separate call to the configured verifier model** with its own prompt and structured result. Give it the original ticket, FAQ text, and draft reply. It checks whether the answer is correct, in the right language, and free of unsupported claims.
 - This check does not translate the ticket into English first.
-- If a check fails, change the action to `handoff`, write an English note, and validate the new request.
+- The verifier returns `approved`, `revision_allowed`, and an English `reason`. Revision is allowed only for draft problems that can be corrected from the existing FAQ. Mandatory escalation, unknown language, genuinely insufficient FAQ support, or problems outside the draft go directly to handoff.
+- If a rejected reply is eligible for revision, GPT-5 mini gets the original ticket, FAQ, rejected draft, and verifier feedback to produce one corrected draft. Run the same verifier on the revised reply; do not lower its checks or confidence requirements.
+- Store `revision_attempted` in workflow state. Allow at most one revision per ticket, regardless of the second verification's revision eligibility. If the revised reply fails verification, change the action to `handoff`, write an English note, and validate the new request.
+- Failed generation or verification calls do not approve a reply. The runner leaves processing failures unsubmitted and logs them using the existing failure path.
 - The second model is an extra check, not a guarantee. Python safety rules still take priority.
 
 ### 8. Send decisions and handle API errors

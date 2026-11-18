@@ -30,7 +30,6 @@ class Classification(BaseModel):
     priority: Priority
     reason: NonEmptyText
     is_spam: bool
-    proposed_action: Action
     escalation_intents: list[EscalationIntent]
 
 
@@ -46,6 +45,7 @@ class ReplyVerification(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     approved: bool
+    revision_allowed: bool
     reason: NonEmptyText
 
 

@@ -5,10 +5,11 @@ from support_agent.models import Action, Classification, FAQMatch
 
 def decide_action(
     classification: Classification,
+    initial_route: Action,
     faq_match: FAQMatch | None = None,
 ) -> Action:
-    if classification.proposed_action != "reply":
-        return classification.proposed_action
+    if initial_route != "reply":
+        return initial_route
 
     if faq_match is None or not faq_match.fully_supported or not faq_match.matched_faq_ids:
         classification.reason += " The final action is handoff because full FAQ support has not been established."

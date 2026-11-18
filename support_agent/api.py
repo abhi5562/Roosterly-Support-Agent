@@ -4,6 +4,8 @@ import time
 
 import httpx
 
+from support_agent.models import CloseRequest, HandoffRequest, ReplyRequest
+
 
 BASE_URL = "https://nakywgkztvzkihdjnwbc.supabase.co/functions/v1/helpdesk/"
 
@@ -37,20 +39,25 @@ class HelpdeskClient:
     def close(self):
         self.client.close()
 
+    def _retry(self, response, attempt):
+        if response.status_code not in (429, 503) or attempt == self.max_retries:
+            return False
+
+        delay = self.retry_delay * 2**attempt
+        if response.status_code == 429:
+            retry_after = response.headers.get("Retry-After")
+            if retry_after is None:
+                raise RuntimeError("Helpdesk returned 429 without Retry-After.")
+            delay = float(retry_after)
+        time.sleep(delay)
+        return True
+
     def _get(self, path, params=None):
         for attempt in range(self.max_retries + 1):
             time.sleep(0.21) # Rate limiting
             response = self.client.get(path, params=params)
 
-            # If rate limiting error or service unavailable error
-            if response.status_code in (429, 503) and attempt < self.max_retries:
-                delay = self.retry_delay * 2**attempt
-                if response.status_code == 429:
-                    retry_after = response.headers.get("Retry-After")
-                    if retry_after is None:
-                        raise RuntimeError("Helpdesk returned 429 without Retry-After.")
-                    delay = float(retry_after)
-                time.sleep(delay)
+            if self._retry(response, attempt):
                 continue
 
             if not response.is_success:
@@ -62,6 +69,69 @@ class HelpdeskClient:
 
     def get_status(self):
         return self._get("status")
+
+    def get_ticket(self, ticket_id: str):
+        return self._get(f"tickets/{ticket_id}")
+
+    def submit_decision(
+        self,
+        ticket_id: str,
+        request: ReplyRequest | HandoffRequest | CloseRequest,
+    ):
+        if isinstance(request, ReplyRequest):
+            action = "reply"
+        elif isinstance(request, HandoffRequest):
+            action = "handoff"
+        elif isinstance(request, CloseRequest):
+            action = "close"
+        else:
+            raise TypeError("A validated reply, handoff, or close request is required.")
+
+        payload = request.model_dump()
+        result = {
+            "outcome": "unknown",
+            "attempts": 0,
+            "status_code": None,
+            "error": None,
+        }
+
+        for attempt in range(self.max_retries + 1):
+            result["attempts"] = attempt + 1
+            result["status_code"] = None
+            time.sleep(0.21)
+
+            try:
+                response = self.client.post(f"tickets/{ticket_id}/{action}", json=payload)
+            except httpx.TransportError:
+                # The action may have been saved, so check the ticket without resending.
+                try:
+                    ticket = self.get_ticket(ticket_id)
+                    if ticket["handled"] is None:
+                        ticket_check = "open"
+                    else:
+                        ticket_check = "handling_present"
+                except (httpx.TransportError, RuntimeError):
+                    ticket_check = "failed"
+
+                result["error"] = "Submission outcome is unknown after a transport failure; action was not resent."
+                result["ticket_check"] = ticket_check
+                return result
+
+            result["status_code"] = response.status_code
+            if response.is_success:
+                result["outcome"] = "success"
+                return result
+
+            if response.status_code == 409:
+                result["outcome"] = "already_handled"
+                return result
+
+            if self._retry(response, attempt):
+                continue
+
+            result["outcome"] = "failed"
+            result["error"] = f"Helpdesk action failed with HTTP {response.status_code}."
+            return result
 
     def get_examples(self):
         """Return labelled examples"""
