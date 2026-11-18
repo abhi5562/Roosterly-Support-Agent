@@ -32,9 +32,7 @@ Create `.env` using `.env.example` with both API keys and your candidate email. 
 I set `MAX_RETRIES=3` in `.env` for up to three retries.
 
 - **Rate limit:** A 0.21-second wait before each call keeps requests below five per second.
-- **429:** Wait for the time in `Retry-After`, then try again.
-- **503:** Try again with double the wait each time.
-- **409:** Record "already handled" and do not resend.
+- **API errors:** For 429, wait for `Retry-After` before retrying; for 503, double the wait with each retry; for 409, record "already handled" and do not resend.
 - **Connection failure:** Check the ticket with GET and record `unknown` without resending; the action may already be saved.
 - **Crash:** Restart from open tickets; already-handled tickets are excluded by the server.
 - **Processing failure:** Log a safe error, skip submission and continue.
