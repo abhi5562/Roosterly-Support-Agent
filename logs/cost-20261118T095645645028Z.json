@@ -1,0 +1,53 @@
+{
+  "usage_file": "logs/usage-20261118T095645645028Z.json",
+  "pricing_checked": "2026-11-18",
+  "currency": "USD",
+  "basis": "Reported model token usage priced at published Standard API rates; not a billing statement.",
+  "assumptions": [
+    "Short-context Standard rates, with no regional, Fast, Batch, or Flex adjustment.",
+    "Terra cache writes use the published 30-minute retention rate.",
+    "Cache reads and writes are parts of input_tokens, not additional input tokens.",
+    "Output tokens already include reasoning tokens; these are not charged twice.",
+    "Only this practice run was metered; earlier evaluation spend is not included."
+  ],
+  "tickets_attempted": 30,
+  "outcomes": {
+    "success": 30,
+    "already_handled": 0,
+    "failed": 0,
+    "unknown": 0,
+    "processing_failed": 0
+  },
+  "models": {
+    "gpt-5-mini-2025-08-07": {
+      "uncached_input_tokens": 52033,
+      "cached_input_tokens": 19584,
+      "cache_write_tokens": 0,
+      "output_tokens": 49462,
+      "rates_usd_per_million": {
+        "input": 0.25,
+        "cached_input": 0.025,
+        "output": 2,
+        "source": "https://developers.openai.com/api/docs/models/gpt-5-mini"
+      },
+      "estimated_cost_usd": 0.11242185
+    },
+    "gpt-6.1-terra": {
+      "uncached_input_tokens": 48,
+      "cached_input_tokens": 22095,
+      "cache_write_tokens": 5078,
+      "output_tokens": 2720,
+      "rates_usd_per_million": {
+        "input": 1,
+        "cached_input": 0.05,
+        "cache_write": 1.25,
+        "output": 5,
+        "source": "https://developers.openai.com/api/docs/models/gpt-6.1-terra"
+      },
+      "estimated_cost_usd": 0.02110025
+    }
+  },
+  "estimated_run_cost_usd": 0.1335221,
+  "cost_per_100_formula": "estimated_run_cost_usd / tickets_attempted * 100",
+  "estimated_cost_per_100_usd": 0.4450736667
+}

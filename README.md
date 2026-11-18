@@ -36,13 +36,13 @@ I set `MAX_RETRIES=3` in `.env`: one initial attempt plus at most three retries.
 
 I compared 10 examples with supplied labels, hidden from the agent. No actions were submitted. Reports: [before](evaluations/20261118T074250927613Z.json), [after](evaluations/20261118T090549549910Z.json).
 
-| Run | Language accuracy | Category accuracy | Priority accuracy | Action accuracy | All four correct | Unnecessary handoffs | Missed reference handoffs | Processing failures |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Baseline | 100% | 100% | 80% | 60% | 60% | 4 | 0 | 0 |
-| Final | 100% | 90% | 70% | 90% | 60% | 1 | 0 | 0 |
+| Run      | Language accuracy | Category accuracy | Priority accuracy | Action accuracy | All four correct | Unnecessary handoffs | Missed reference handoffs | Processing failures |
+| -------- | ----------------: | ----------------: | ----------------: | --------------: | ---------------: | -------------------: | ------------------------: | ------------------: |
+| Baseline |              100% |              100% |               80% |             60% |              60% |                    4 |                         0 |                   0 |
+| Final    |              100% |               90% |               70% |             90% |              60% |                    1 |                         0 |                   0 |
 
 **Problem:** Replying when a ticket needs human support can cause costly mistakes. The first run had zero missed reference handoffs, but four unnecessary handoffs. I had given the classifier too much freedom: choosing handoff skipped the FAQ check. Some generated replies also added unsupported details or missed conditions, so the verifier rejected them. Sending these answerable tickets to people works against the agent's goal of reducing manual work.
 
 **Fix:** I used fixed deterministic python routing rules so tickets without a mandatory handoff reach FAQ matching. I also clarified the writing instructions and gave fixable replies one correction attempt using verifier feedback. The corrected reply must pass the same checks; otherwise, it goes to a human. This balances avoiding unsafe replies with reducing unnecessary handoffs. In the final run, unnecessary handoffs fell from four to one, while missed reference handoffs stayed at zero.
 
-**Cost/100 (illustrative):** Assume input/output tokens per ticket: mini 5,000/2,000; Terra 3,000/1,000. Rates/million: [mini](https://developers.openai.com/api/docs/models/gpt-5-mini) $0.25/$2; [Terra](https://developers.openai.com/api/docs/models/gpt-6.1-terra) $1/$5. Calculation: `100 × (5000×0.25 + 2000×2 + 3000×1 + 1000×5) / 1,000,000` ≈ **$1.33**. Actual usage/spend was not recorded.
+**Cost/100 (measured usage):** All 30 practice submissions succeeded. Using published [mini](https://developers.openai.com/api/docs/models/gpt-5-mini) and [Terra](https://developers.openai.com/api/docs/models/gpt-6.1-terra) prices, their estimated costs were $0.11242185 and $0.02110025. Calculation: `($0.11242185 + $0.02110025) / 30 × 100` ≈ **$0.45 per 100 tickets**. This includes cache reads and assumes 30-minute cache writes.
