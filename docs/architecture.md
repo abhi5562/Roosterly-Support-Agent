@@ -39,18 +39,20 @@ LangGraph will pass ticket details and results between steps. The shared state w
 
 ### 2. Classify the ticket — Python empty check, then GPT-5 mini
 
-- At the start of the workflow's classification node, use Python to check whether **both subject and body are empty after stripping whitespace**. Close such tickets without calling the LLM. Use `language: "nl"` only because the API requires a language value. Include the other required fields and explain that the ticket was empty.
+- At the start of the workflow's classification node, use Python to check whether **both subject and body are empty after stripping whitespace**. Set `is_empty: true` and close such tickets without calling the LLM. Use `language: "nl"` only because the API requires a language value. Include the other required fields and explain that the ticket was empty.
 - For nonempty tickets, GPT-5 mini reads the original subject and body without translating them first.
-- Return the language (`nl`, `en`, `de`), category, priority (`P1`–`P4`), spam flag, escalation intents, and reason. Include every applicable escalation intent when a ticket has multiple requests. The model does not return an action.
+- Return the language (`nl`, `en`, `de`), category, priority (`P1`–`P4`), empty-content flag (`is_empty`), spam flag, escalation intents, and reason. Include every applicable escalation intent when a ticket has multiple requests. The model does not return an action.
+- Set `is_empty` only for clear shells with no meaningful customer content across both fields. An empty body with a bare reply marker can qualify; a meaningful subject-only request cannot. Uncertain cases use `is_empty: false`. A clear empty shell without language-bearing text uses `nl` as a technical API fallback, with category `other` and priority `P4`.
 - Use Pydantic to check the result. Follow the priority definitions from the assignment.
-- The classification node determines the initial route once and stores it as `initial_route` in workflow state, separate from classification. The route comes from empty-ticket status, escalation intents, language, and spam status.
+- The classification node determines the initial route once and stores it as `initial_route` in workflow state, separate from classification. The route comes from empty-ticket status, escalation intents, language, priority, and spam status.
 - If classification fails or is unclear, hand off when a valid API request can be made.
 
 ### 3. Select the initial route — Python only
 
 - GPT-5 mini identifies escalation intents during classification: refunds or disputed charges, cancellations or contract changes, personal-data requests (GDPR/AVG), possible security incidents, legal threats, and customers threatening to leave.
 - If any mandatory escalation intent is present, Python locks the initial route to `handoff`, regardless of the spam flag.
-- Unknown language also locks the action to `handoff`. Otherwise, clear spam is closed.
+- Unknown language or priority `P1` also locks the action to `handoff`. These checks take precedence over model-identified empty content and spam.
+- Otherwise, close tickets with `is_empty: true`, explaining that there is no meaningful content. Next, close clear spam. These flags do not require an extra model call.
 - Every other nonempty ticket becomes a reply candidate and proceeds to FAQ matching. This is not permission to send a reply: insufficient FAQ support, low confidence, or failed verification still requires handoff.
 - Use the classification's language, category, priority, and reason for the required API metadata.
 
@@ -70,7 +72,7 @@ Pass `initial_route` explicitly to the decision function; do not recalculate the
 Apply these rules in order:
 
 1. If an earlier check locked the ticket to `handoff`, keep that action.
-2. Keep `close` only when selected by the empty-ticket or clear-spam checks.
+2. Keep `close` only when selected by the blank-ticket, model-identified empty-content, or clear-spam checks.
 3. Allow `reply` only when the FAQ fully supports it **and** confidence meets the configured threshold.
 4. Hand off anything unclear, unsupported, or unsafe.
 

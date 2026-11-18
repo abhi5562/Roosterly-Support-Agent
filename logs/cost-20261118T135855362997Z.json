@@ -1,5 +1,5 @@
 {
-  "usage_file": "logs/usage-20261118T095645645028Z.json",
+  "usage_file": "logs/usage-20261118T135855362997Z.json",
   "pricing_checked": "2026-11-18",
   "currency": "USD",
   "basis": "Reported model token usage priced at published Standard API rates; not a billing statement.",
@@ -8,7 +8,7 @@
     "Terra cache writes use the published 30-minute retention rate.",
     "Cache reads and writes are parts of input_tokens, not additional input tokens.",
     "Output tokens already include reasoning tokens; these are not charged twice.",
-    "Only this practice run was metered; earlier evaluation spend is not included."
+    "This report covers only this practice run; earlier practice and evaluation costs are excluded."
   ],
   "tickets_attempted": 30,
   "outcomes": {
@@ -18,25 +18,38 @@
     "unknown": 0,
     "processing_failed": 0
   },
+  "actions": {
+    "reply": 8,
+    "handoff": 20,
+    "close": 2
+  },
+  "submission_retries": 0,
+  "ticket_log_first_record": 31,
+  "ticket_log_record_count": 30,
+  "practice_status_after_run": {
+    "mode": "practice",
+    "open_tickets": 0,
+    "handled_tickets": 30
+  },
   "models": {
     "gpt-5-mini-2025-08-07": {
-      "uncached_input_tokens": 52033,
-      "cached_input_tokens": 19584,
+      "uncached_input_tokens": 48480,
+      "cached_input_tokens": 16128,
       "cache_write_tokens": 0,
-      "output_tokens": 49462,
+      "output_tokens": 43660,
       "rates_usd_per_million": {
         "input": 0.25,
         "cached_input": 0.025,
         "output": 2,
         "source": "https://developers.openai.com/api/docs/models/gpt-5-mini"
       },
-      "estimated_cost_usd": 0.11242185
+      "estimated_cost_usd": 0.0998432
     },
     "gpt-6.1-terra": {
-      "uncached_input_tokens": 48,
-      "cached_input_tokens": 22095,
-      "cache_write_tokens": 5078,
-      "output_tokens": 2720,
+      "uncached_input_tokens": 30,
+      "cached_input_tokens": 14730,
+      "cache_write_tokens": 2035,
+      "output_tokens": 1861,
       "rates_usd_per_million": {
         "input": 1,
         "cached_input": 0.05,
@@ -44,10 +57,10 @@
         "output": 5,
         "source": "https://developers.openai.com/api/docs/models/gpt-6.1-terra"
       },
-      "estimated_cost_usd": 0.02110025
+      "estimated_cost_usd": 0.01261525
     }
   },
-  "estimated_run_cost_usd": 0.1335221,
+  "estimated_run_cost_usd": 0.11245845,
   "cost_per_100_formula": "estimated_run_cost_usd / tickets_attempted * 100",
-  "estimated_cost_per_100_usd": 0.4450736667
+  "estimated_cost_per_100_usd": 0.3748615
 }

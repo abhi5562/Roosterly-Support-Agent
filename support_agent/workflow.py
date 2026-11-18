@@ -38,19 +38,25 @@ def classify_node(state: WorkflowState):
             language="nl",
             category="other",
             priority="P4",
-            reason="Empty subject and body; no actionable content or urgency, so close; nl is a technical language fallback.",
+            reason="Empty subject/body; no actionable content or urgency, so close; nl is a technical language fallback.",
+            is_empty=True,
             is_spam=False,
             escalation_intents=[],
         )
         initial_route = "close"
     else:
         classification = classify_ticket(ticket["subject"], ticket["body"])
-        if classification.escalation_intents or classification.language is None:
+        if classification.escalation_intents or classification.language is None or classification.priority == "P1":
             initial_route = "handoff"
             if classification.escalation_intents:
                 classification.reason += " This request requires human support."
-            else:
+            elif classification.language is None:
                 classification.reason += " Human support is needed because the ticket's language is unsupported or unclear."
+            else:
+                classification.reason += " The priority is P1 which requires immediate attention, so Human support is needed"
+        elif classification.is_empty:
+            initial_route = "close"
+            classification.reason += " Close this ticket because it contains no meaningful customer content."
         elif classification.is_spam:
             initial_route = "close"
             classification.reason += " Close this ticket because it is clear spam."

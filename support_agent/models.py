@@ -29,6 +29,7 @@ class Classification(BaseModel):
     category: Category
     priority: Priority
     reason: NonEmptyText
+    is_empty: bool
     is_spam: bool
     escalation_intents: list[EscalationIntent]
 

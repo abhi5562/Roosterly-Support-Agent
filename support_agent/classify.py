@@ -14,6 +14,8 @@ Do not translate the ticket before classification. Do not write a customer reply
 
 Return:
 - language: nl, en, or de; null if the language is unsupported or uncertain.
+  For a clearly empty shell with no language-bearing text, use nl only as the
+  required API fallback, not as a detected customer language.
 - category: bug, billing, feature_request, question, or other.
 - priority:
   P1: many users blocked right now, or a security or legal risk.
@@ -21,6 +23,11 @@ Return:
   P3: something is wrong or unclear, but there is a workaround.
   P4: no urgency, including how-to questions, ideas, and cosmetic issues.
 - is_spam: true only for clear spam, not merely an unusual or difficult request.
+- is_empty: true only when the subject and body together contain no meaningful
+  customer content or request, such as an empty email shell with only a reply marker
+  or punctuation. A missing body or subject alone does not make a ticket empty.
+  A short request, meaningful subject-only message, or unclear issue is not empty.
+  If uncertain, return false. For clear empty shells, use category other and priority P4.
 - escalation_intents: include EVERY applicable intent from the following list:
   refund: requests for money back.
   disputed_charge: disputed, duplicate, incorrect, or unauthorized charges.

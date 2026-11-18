@@ -2,11 +2,18 @@
 
 ## How to run
 
-Use Python 3.11+. Create private `.env` settings from `.env.example` with your keys/email. From the cloned project root:
+Use Python 3.11+. Clone the repository and install dependencies:
 
 ```bash
+git clone https://github.com/abhi5562/Roosterly-Support-Agent.git
+cd Roosterly-Support-Agent
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+```
+
+Create a private `.env` in this directory using the settings in `.env.example`. Add your OpenAI API key, helpdesk API key and candidate email. Then run:
+
+```bash
 .venv/bin/python -m support_agent           # Run agent; submits decisions
 .venv/bin/python -m support_agent.evaluate  # Evaluate only; submits nothing
 ```
@@ -18,6 +25,16 @@ python3 -m venv .venv
 - **Knowledge:** I load the small `docs/faq.md` once as the only answer source; no vector database.
 - **Handoff:** Refunds/disputes, cancellations/contract changes, personal-data requests, security incidents, legal threats and threats to leave override FAQ support and spam. Other replies require full FAQ support and configurable confidence **≥0.85**.
 - **Defaults:** Empty subject and body close without a model call: `nl`, `other`, `P4`, empty-ticket reason. Nonempty unknown-language tickets hand off with fallback `nl`. Other spam closes using classified category/priority.
+
+**Workflow nodes:**
+
+- **classify:** Identifies language, category, priority, empty content, spam and escalation intents; Python selects the initial route.
+- **match_faq:** Finds relevant FAQ information and checks answer coverage and confidence.
+- **decide:** Keeps close/handoff decisions or allows a reply only when FAQ support and confidence are sufficient.
+- **prepare_request:** Builds the customer reply, English handoff note or close request without submitting it.
+- **verify_reply:** Independently checks the draft's accuracy, language and safety, and whether rejection can be corrected.
+- **revise_reply:** Uses verifier feedback to correct the draft once, then sends it for verification again.
+- **handoff:** Changes a rejected reply to handoff and passes the rejection reason to handoff-note preparation.
 
 ## Reliability
 
@@ -34,15 +51,20 @@ I set `MAX_RETRIES=3` in `.env`: one initial attempt plus at most three retries.
 
 ## Eval and fix
 
-I compared 10 examples with supplied labels, hidden from the agent. No actions were submitted. Reports: [before](evaluations/20261118T074250927613Z.json), [after](evaluations/20261118T090549549910Z.json).
+I compared 10 examples with supplied labels, hidden from the agent. No actions were submitted. Reports: [baseline](evaluations/20261118T074250927613Z.json), [after correction](evaluations/20261118T132705567767Z.json).
 
-| Run      | Language accuracy | Category accuracy | Priority accuracy | Action accuracy | All four correct | Unnecessary handoffs | Missed reference handoffs | Processing failures |
-| -------- | ----------------: | ----------------: | ----------------: | --------------: | ---------------: | -------------------: | ------------------------: | ------------------: |
-| Baseline |              100% |              100% |               80% |             60% |              60% |                    4 |                         0 |                   0 |
-| Final    |              100% |               90% |               70% |             90% |              60% |                    1 |                         0 |                   0 |
+| Run              | Language accuracy | Category accuracy | Priority accuracy | Action accuracy | All four correct | Unnecessary handoffs | Missed reference handoffs | Processing failures |
+| ---------------- | ----------------: | ----------------: | ----------------: | --------------: | ---------------: | -------------------: | ------------------------: | ------------------: |
+| Baseline         |              100% |              100% |               80% |             60% |              60% |                    4 |                         0 |                   0 |
+| After correction |              100% |              100% |               80% |             80% |              70% |                    2 |                         0 |                   0 |
 
 **Problem:** Replying when a ticket needs human support can cause costly mistakes. The first run had zero missed reference handoffs, but four unnecessary handoffs. I had given the classifier too much freedom: choosing handoff skipped the FAQ check. Some generated replies also added unsupported details or missed conditions, so the verifier rejected them. Sending these answerable tickets to people works against the agent's goal of reducing manual work.
 
-**Fix:** I used fixed deterministic python routing rules so tickets without a mandatory handoff reach FAQ matching. I also clarified the writing instructions and gave fixable replies one correction attempt using verifier feedback. The corrected reply must pass the same checks; otherwise, it goes to a human. This balances avoiding unsafe replies with reducing unnecessary handoffs. In the final run, unnecessary handoffs fell from four to one, while missed reference handoffs stayed at zero.
+**Fix:** I used deterministic Python routing rules so tickets without a required handoff reach FAQ matching, while P1 tickets always go to a human. I also clarified the writing instructions and gave fixable replies one correction attempt using verifier feedback. The corrected reply must pass the same checks; otherwise, it goes to a human. The latest run had two unnecessary handoffs, down from four initially, with zero missed reference handoffs.
 
-**Cost/100 (measured usage):** All 30 practice submissions succeeded. Using published [mini](https://developers.openai.com/api/docs/models/gpt-5-mini) and [Terra](https://developers.openai.com/api/docs/models/gpt-6.1-terra) prices, their estimated costs were $0.11242185 and $0.02110025. Calculation: `($0.11242185 + $0.02110025) / 30 × 100` ≈ **$0.45 per 100 tickets**. This includes cache reads and assumes 30-minute cache writes.
+**Cost/100 (final practice run):**  Using published [mini](https://developers.openai.com/api/docs/models/gpt-5-mini) and [Terra](https://developers.openai.com/api/docs/models/gpt-6.1-terra) prices, their estimated costs were $0.0998432 and $0.01261525. Calculation: `($0.0998432 + $0.01261525) / 30 × 100` ≈ **$0.37 per 100 tickets**. This uses recorded tokens, includes cache reads and assumes 30-minute cache writes; see the [full calculation](logs/cost-20261118T135855362997Z.json).
+
+## What I would improve
+
+- **My next step:** I would evaluate more human-labelled Dutch, English and German tickets, including mixed requests and empty email shells. I would use the results to tune the agent so it does not reply when a human is needed, while also avoiding unnecessary handoffs. I would repeat evaluations to check that this balance is maintained consistently.
+- **One rule I would change:** I would ask the client to clarify the priority definitions with examples. Does "many users blocked" mean employees at one customer or a wider outage? Does "money involved" include routine pricing questions, which the reference labels treat as P4? Clearer distinctions would help assign priorities consistently.

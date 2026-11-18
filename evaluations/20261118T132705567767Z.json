@@ -1,0 +1,335 @@
+{
+  "time": "2026-11-18T13:27:05.565918+00:00",
+  "models": {
+    "agent": "gpt-5-mini",
+    "verifier": "gpt-6.1-terra"
+  },
+  "reply_confidence_threshold": 0.85,
+  "metrics": {
+    "examples": 10,
+    "accuracy": {
+      "language": 1.0,
+      "category": 1.0,
+      "priority": 0.8,
+      "action": 0.8
+    },
+    "exact_match_accuracy": 0.7,
+    "processing_failures": 0,
+    "missed_reference_handoffs": 0,
+    "unnecessary_handoffs": 2
+  },
+  "results": [
+    {
+      "ticket_id": "E01",
+      "expected": {
+        "language": "en",
+        "category": "bug",
+        "priority": "P3",
+        "action": "reply"
+      },
+      "reference_reason": "English ticket. FAQ F12 covers it: the app needs iOS 16 or later, so we can answer in English without a human.",
+      "predicted": {
+        "language": "en",
+        "category": "bug",
+        "priority": "P2",
+        "action": "handoff"
+      },
+      "classification_reason": "Bug report: the app crashes on a single user's device, blocking their ability to use the app (P2). Check FAQ support before deciding whether to reply. Reply verification failed; the final action is handoff for human review.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": false,
+        "action": false
+      },
+      "faq_ids": [
+        "F12 \u00b7 Mobile app requirements"
+      ],
+      "faq_fully_supported": true,
+      "faq_confidence": 0.9,
+      "reply_approved": false,
+      "reply_revised": true,
+      "verification_reason": "F12 supports the stated operating-system requirements and the conditional suggestion to use a supported device without guaranteeing a fix. However, the draft promises further guidance, which the FAQ does not support. Remove that commitment.",
+      "error": null
+    },
+    {
+      "ticket_id": "E02",
+      "expected": {
+        "language": "nl",
+        "category": "billing",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "reference_reason": "How to change invoice details is in FAQ F06. Reply in Dutch.",
+      "predicted": {
+        "language": "nl",
+        "category": "billing",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "classification_reason": "Customer asks to update VAT number on invoices, classified as billing with low urgency (P4). Check FAQ support before deciding whether to reply.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": true
+      },
+      "faq_ids": [
+        "F06"
+      ],
+      "faq_fully_supported": true,
+      "faq_confidence": 0.9,
+      "reply_approved": true,
+      "reply_revised": true,
+      "verification_reason": "The Dutch reply correctly directs the customer to change the VAT number for future invoices under Instellingen \u2192 Bedrijfsgegevens. FAQ F06 also supports the invoice delivery date and download location.",
+      "error": null
+    },
+    {
+      "ticket_id": "E03",
+      "expected": {
+        "language": "nl",
+        "category": "billing",
+        "priority": "P2",
+        "action": "handoff"
+      },
+      "reference_reason": "Refund request ('terugkrijgen' = get back). Client rule: refunds always go to a human.",
+      "predicted": {
+        "language": "nl",
+        "category": "billing",
+        "priority": "P2",
+        "action": "handoff"
+      },
+      "classification_reason": "Customer requests a refund for a closed month; billing issue with priority P2 because money is involved. This request requires human support.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": true
+      },
+      "faq_ids": [],
+      "faq_fully_supported": null,
+      "faq_confidence": null,
+      "reply_approved": null,
+      "reply_revised": false,
+      "verification_reason": null,
+      "error": null
+    },
+    {
+      "ticket_id": "E04",
+      "expected": {
+        "language": "nl",
+        "category": "question",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "reference_reason": "Dutch how-to question about swapping shifts, answered by FAQ F03. Reply in Dutch.",
+      "predicted": {
+        "language": "nl",
+        "category": "question",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "classification_reason": "Customer asks a how-to question about swapping a shift, so it's a question with low urgency (P4). Check FAQ support before deciding whether to reply.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": true
+      },
+      "faq_ids": [
+        "F03"
+      ],
+      "faq_fully_supported": true,
+      "faq_confidence": 0.9,
+      "reply_approved": true,
+      "reply_revised": false,
+      "verification_reason": "The Dutch reply explains how to offer a shift swap, who can accept it, and how manager approval works, including that it can be disabled. FAQ F03 supports these instructions and menu names. The request language matches the ticket, and no escalation is required.",
+      "error": null
+    },
+    {
+      "ticket_id": "E05",
+      "expected": {
+        "language": "nl",
+        "category": "feature_request",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "reference_reason": "Feature request (Google Calendar sync). Acknowledge in Dutch and point to the roadmap (F10).",
+      "predicted": {
+        "language": "nl",
+        "category": "feature_request",
+        "priority": "P4",
+        "action": "handoff"
+      },
+      "classification_reason": "Customer requests a Google Calendar integration; this is a feature request with no urgency. Check FAQ support before deciding whether to reply. The final action is handoff because full FAQ support has not been established.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": false
+      },
+      "faq_ids": [
+        "F10"
+      ],
+      "faq_fully_supported": false,
+      "faq_confidence": 0.85,
+      "reply_approved": null,
+      "reply_revised": false,
+      "verification_reason": null,
+      "error": null
+    },
+    {
+      "ticket_id": "E06",
+      "expected": {
+        "language": "en",
+        "category": "bug",
+        "priority": "P2",
+        "action": "handoff"
+      },
+      "reference_reason": "One customer blocked from publishing: P2, needs an engineer.",
+      "predicted": {
+        "language": "en",
+        "category": "bug",
+        "priority": "P1",
+        "action": "handoff"
+      },
+      "classification_reason": "A bug prevents publishing the rota and makes next week's schedule invisible to staff, blocking many users so it's P1. The priority is P1 which requires immediate attention, so Human support is needed",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": false,
+        "action": true
+      },
+      "faq_ids": [],
+      "faq_fully_supported": null,
+      "faq_confidence": null,
+      "reply_approved": null,
+      "reply_revised": false,
+      "verification_reason": null,
+      "error": null
+    },
+    {
+      "ticket_id": "E07",
+      "expected": {
+        "language": "nl",
+        "category": "billing",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "reference_reason": "Price question answered by F05 (25 x \u20ac6 = \u20ac150 excl. VAT). Reply in Dutch.",
+      "predicted": {
+        "language": "nl",
+        "category": "billing",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "classification_reason": "Customer asks for the price of the Plus plan for 25 employees, a billing question with no urgency. Check FAQ support before deciding whether to reply.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": true
+      },
+      "faq_ids": [
+        "F05"
+      ],
+      "faq_fully_supported": true,
+      "faq_confidence": 0.9,
+      "reply_approved": true,
+      "reply_revised": false,
+      "verification_reason": "The Dutch reply correctly calculates \u20ac150 per month excluding VAT for 25 active employees. FAQ F05 supports the \u20ac6 rate, Plus features and upgrade terms; F02 confirms that only active employees are charged.",
+      "error": null
+    },
+    {
+      "ticket_id": "E08",
+      "expected": {
+        "language": "nl",
+        "category": "other",
+        "priority": "P4",
+        "action": "close"
+      },
+      "reference_reason": "Spam (crypto offer): close it.",
+      "predicted": {
+        "language": "nl",
+        "category": "other",
+        "priority": "P4",
+        "action": "close"
+      },
+      "classification_reason": "Spam marketing solicitation; categorize as other with priority P4. Close this ticket because it is clear spam.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": true
+      },
+      "faq_ids": [],
+      "faq_fully_supported": null,
+      "faq_confidence": null,
+      "reply_approved": null,
+      "reply_revised": false,
+      "verification_reason": null,
+      "error": null
+    },
+    {
+      "ticket_id": "E09",
+      "expected": {
+        "language": "nl",
+        "category": "other",
+        "priority": "P2",
+        "action": "handoff"
+      },
+      "reference_reason": "GDPR access request ('inzageverzoek', AVG = Dutch GDPR): always a human.",
+      "predicted": {
+        "language": "nl",
+        "category": "other",
+        "priority": "P2",
+        "action": "handoff"
+      },
+      "classification_reason": "Personal data access request (GDPR) classified as other with P2 priority due to legal compliance. This request requires human support.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": true
+      },
+      "faq_ids": [],
+      "faq_fully_supported": null,
+      "faq_confidence": null,
+      "reply_approved": null,
+      "reply_revised": false,
+      "verification_reason": null,
+      "error": null
+    },
+    {
+      "ticket_id": "E10",
+      "expected": {
+        "language": "nl",
+        "category": "question",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "reference_reason": "Asks about planned maintenance tonight. Point to the status page (F11), in Dutch.",
+      "predicted": {
+        "language": "nl",
+        "category": "question",
+        "priority": "P4",
+        "action": "reply"
+      },
+      "classification_reason": "Customer asks whether maintenance is planned tonight, an informational question with no urgency (category=question, priority=P4). Check FAQ support before deciding whether to reply.",
+      "matches": {
+        "language": true,
+        "category": true,
+        "priority": true,
+        "action": true
+      },
+      "faq_ids": [
+        "F11"
+      ],
+      "faq_fully_supported": true,
+      "faq_confidence": 0.9,
+      "reply_approved": true,
+      "reply_revised": false,
+      "verification_reason": "The Dutch reply directs the customer to the status page to check whether maintenance is planned tonight, without asserting a current status. FAQ F11 identifies that page as the source for current outages and planned maintenance. The request language matches the ticket.",
+      "error": null
+    }
+  ]
+}

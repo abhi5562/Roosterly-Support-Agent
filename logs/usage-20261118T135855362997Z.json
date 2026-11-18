@@ -1,0 +1,40 @@
+{
+  "time": "2026-11-18T13:58:55.362708+00:00",
+  "tickets_attempted": 30,
+  "outcomes": {
+    "success": 30,
+    "already_handled": 0,
+    "failed": 0,
+    "unknown": 0,
+    "processing_failed": 0
+  },
+  "token_usage_by_model": {
+    "gpt-5-mini-2025-08-07": {
+      "input_tokens": 64608,
+      "output_token_details": {
+        "audio": 0,
+        "reasoning": 33536
+      },
+      "input_token_details": {
+        "audio": 0,
+        "cache_read": 16128
+      },
+      "total_tokens": 108268,
+      "output_tokens": 43660
+    },
+    "gpt-6.1-terra": {
+      "input_tokens": 16795,
+      "output_token_details": {
+        "audio": 0,
+        "reasoning": 1127
+      },
+      "input_token_details": {
+        "audio": 0,
+        "cache_read": 14730,
+        "cache_creation": 2035
+      },
+      "total_tokens": 18656,
+      "output_tokens": 1861
+    }
+  }
+}
